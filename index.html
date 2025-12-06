@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Assessment Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 28px;
+            color: #1f2937;
+            margin: 0;
+        }
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4f46e5;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .scenario-box {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .scenario-box h2 {
+            font-size: 20px;
+            color: #1f2937;
+            margin: 0 0 15px 0;
+        }
+        .scenario-box p {
+            font-size: 18px;
+            color: #374151;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn-safe {
+            background: #10b981;
+        }
+        .btn-unsafe {
+            background: #ef4444;
+        }
+        .result-box {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 2px solid;
+        }
+        .result-correct {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+        .result-incorrect {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        .result-box h3 {
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+        .result-box p {
+            color: #374151;
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+        .btn-next {
+            width: 100%;
+            padding: 15px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-next:hover {
+            background: #4338ca;
+        }
+        .hidden {
+            display: none;
+        }
+        .complete {
+            text-align: center;
+            padding: 40px;
+        }
+        .complete h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .final-score {
+            font-size: 60px;
+            font-weight: bold;
+            color: #4f46e5;
+            margin: 30px 0;
+        }
+        .message {
+            font-size: 20px;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="game">
+        <div class="header">
+            <h1>Risk Assessment Game</h1>
+            <div class="score">Score: <span id="score">0</span> / <span id="current">0</span></div>
+        </div>
+        <div>
+            <div id="progress-text" style="color: #6b7280; margin-bottom: 10px;">Question 1 of 8</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+        <div class="scenario-box">
+            <h2>Assess this situation:</h2>
+            <p id="scenario"></p>
+        </div>
+        <div id="question-area">
+            <div class="buttons">
+                <button class="btn btn-safe" onclick="answer('safe')">Risk: Safe ✅</button>
+                <button class="btn btn-unsafe" onclick="answer('unsafe')">Risk: Unsafe ⚠️</button>
+            </div>
+        </div>
+        <div id="result-area" class="hidden">
+            <div id="result-box" class="result-box">
+                <h3 id="result-title"></h3>
+                <p><strong>Correct Answer:</strong> <span id="correct-answer"></span></p>
+                <p><strong>Explanation:</strong> <span id="explanation"></span></p>
+            </div>
+            <button class="btn-next" onclick="next()">Next Question</button>
+        </div>
+    </div>
+    <div class="container complete hidden" id="complete">
+        <h1>Game Complete!</h1>
+        <div class="final-score" id="final-score"></div>
+        <p class="message" id="message"></p>
+        <button class="btn-next" onclick="restart()">Play Again</button>
+    </div>
+    <script>
+        var data = [
+            {text: "Walking alone in a well-lit parking lot at night", risk: "safe", reason: "Well-lit areas with good visibility are generally safer."},
+            {text: "Sharing your home address publicly on social media", risk: "unsafe", reason: "This compromises your privacy and personal security."},
+            {text: "Using a crosswalk with traffic signals", risk: "safe", reason: "Designated crosswalks with signals provide safe passage."},
+            {text: "Leaving your drink unattended at a party", risk: "unsafe", reason: "Unattended drinks can be tampered with."},
+            {text: "Wearing a seatbelt while driving", risk: "safe", reason: "Seatbelts significantly reduce injury risk in accidents."},
+            {text: "Texting while crossing a busy street", risk: "unsafe", reason: "Distraction increases accident risk significantly."},
+            {text: "Swimming in a lifeguarded area", risk: "safe", reason: "Lifeguards provide supervision and emergency response."},
+            {text: "Clicking on suspicious email links from unknown senders", risk: "unsafe", reason: "This can lead to phishing attacks or malware infections."}
+        ];
+        var index = 0;
+        var points = 0;
+
+        function show() {
+            var item = data[index];
+            document.getElementById('scenario').textContent = item.text;
+            document.getElementById('progress-text').textContent = 'Question ' + (index + 1) + ' of ' + data.length;
+            document.getElementById('current').textContent = index;
+            document.getElementById('score').textContent = points;
+            var pct = Math.round((index / data.length) * 100);
+            document.getElementById('progress').style.width = pct + '%';
+        }
+
+        function answer(choice) {
+            var item = data[index];
+            var correct = choice === item.risk;
+            if (correct) {
+                points++;
+                document.getElementById('score').textContent = points;
+            }
+            document.getElementById('question-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            var box = document.getElementById('result-box');
+            box.className = 'result-box ' + (correct ? 'result-correct' : 'result-incorrect');
+            document.getElementById('result-title').textContent = correct ? 'Correct!' : 'Incorrect';
+            document.getElementById('correct-answer').textContent = 'Risk: ' + (item.risk === 'safe' ? 'Safe' : 'Unsafe');
+            document.getElementById('explanation').textContent = item.reason;
+            var btn = document.querySelector('#result-area .btn-next');
+            btn.textContent = index < data.length - 1 ? 'Next Question' : 'See Results';
+        }
+
+        function next() {
+            if (index < data.length - 1) {
+                index++;
+                document.getElementById('question-area').classList.remove('hidden');
+                document.getElementById('result-area').classList.add('hidden');
+                show();
+            } else {
+                finish();
+            }
+        }
+
+        function finish() {
+            document.getElementById('game').classList.add('hidden');
+            document.getElementById('complete').classList.remove('hidden');
+            document.getElementById('final-score').textContent = points + ' / ' + data.length;
+            var msg = '';
+            if (points === data.length) {
+                msg = "Perfect score! You're a risk assessment expert!";
+            } else if (points >= data.length * 0.7) {
+                msg = "Great job! You have strong safety awareness.";
+            } else if (points >= data.length * 0.5) {
+                msg = "Good effort! Keep learning about safety.";
+            } else {
+                msg = "Keep practicing! Safety awareness is important.";
+            }
+            document.getElementById('message').textContent = msg;
+        }
+
+        function restart() {
+            index = 0;
+            points = 0;
+            document.getElementById('game').classList.remove('hidden');
+            document.getElementById('complete').classList.add('hidden');
+            document.getElementById('question-area').classList.remove('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            show();
+        }
+
+        show();
+    </script>
+</body>
+</html>
